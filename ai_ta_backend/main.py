@@ -43,6 +43,8 @@ from ai_ta_backend.service.posthog_service import PosthogService
 from ai_ta_backend.service.retrieval_service import RetrievalService
 from ai_ta_backend.service.sentry_service import SentryService
 from ai_ta_backend.service.workflow_service import WorkflowService
+from ai_ta_backend.service.queue_service import QueueService
+
 
 app = Flask(__name__)
 CORS(app)
@@ -475,6 +477,20 @@ def run_flow(service: WorkflowService) -> Response:
     else:
       abort(400, description=f"Bad request: {e}")
 
+@app.route('/ingest', methods=['POST'])
+def ingest(service: QueueService) -> Response:
+  print("In /ingest")
+
+  data = request.get_json()
+
+  # send data to redis_queue/main_script.py
+  result = service.queue_ingest_task(data)
+  print("Result from queue_ingest_task: ", result)
+
+  response = jsonify({"outcome": 'success'})
+  response.headers.add('Access-Control-Allow-Origin', '*')
+  return response
+
 
 def configure(binder: Binder) -> None:
   vector_bound = False
@@ -485,7 +501,7 @@ def configure(binder: Binder) -> None:
   encoded_password = quote_plus(os.getenv('SUPABASE_PASSWORD'))
   DB_URLS = {
       'supabase':
-          f"postgresql://{os.getenv('SUPABASE_USER')}:{encoded_password}@{os.getenv('SUPABASE_URL')}",
+          f"postgresql://{os.getenv('SUPABASE_USER')}:{encoded_password}@{os.getenv('SUPABASE_PG_URL')}",
       'sqlite':
           f"sqlite:///{os.getenv('SQLITE_DB_NAME')}" if os.getenv('SQLITE_DB_NAME') else None,
       'postgres':

@@ -8,7 +8,7 @@ from langchain.vectorstores import Qdrant
 from qdrant_client import models
 from qdrant_client import QdrantClient
 
-OPENAI_API_TYPE = "azure"  # "openai" or "azure"
+OPENAI_API_TYPE = "openai"  # "openai" or "azure"
 
 
 class VectorDatabase():
@@ -32,7 +32,7 @@ class VectorDatabase():
     self.vectorstore = Qdrant(
         client=self.qdrant_client,
         collection_name=os.environ['QDRANT_COLLECTION_NAME'],
-        embeddings=OpenAIEmbeddings(openai_api_type=OPENAI_API_TYPE),
+        embeddings=OpenAIEmbeddings(api_key=os.getenv('VLADS_OPENAI_KEY'), openai_api_type=OPENAI_API_TYPE),
     )
 
   def vector_search(self, search_query, course_name, doc_groups: List[str], user_query_embedding, top_n):
@@ -87,4 +87,13 @@ class VectorDatabase():
                 match=models.MatchValue(value=value),
             ),
         ]),
+    )
+  
+  def upsert(self, collection_name: str, points):
+    """
+    Upsert data into the vector database.
+    """
+    return self.qdrant_client.upsert(
+        collection_name=collection_name,
+        points=points,
     )
