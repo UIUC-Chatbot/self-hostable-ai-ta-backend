@@ -175,8 +175,8 @@ class RetrievalService:
       # Delete from Qdrant
       self.delete_from_qdrant(identifier_key, identifier_value)
 
-      # Delete from Nomic and Supabase
-      self.delete_from_nomic_and_supabase(course_name, identifier_key, identifier_value)
+      # Delete from Nomic and Supabase (commented out for now because Nomic is having issues)
+      # self.delete_from_nomic_and_supabase(course_name, identifier_key, identifier_value)
 
       return "Success"
     except Exception as e:
@@ -393,6 +393,8 @@ class RetrievalService:
               "doc_groups": doc_groups,
           },
       )
+    else:
+      logging.info("Posthog service not available. Skipping event capture.")
 
   def _perform_vector_search(self, search_query, course_name, doc_groups, user_query_embedding, top_n):
     qdrant_start_time = time.monotonic()
@@ -434,6 +436,8 @@ class RetrievalService:
               "vector_score_calculation_latency_sec": time.monotonic() - vector_score_calc_latency_sec,
           },
       )
+    else:
+      logging.info("Posthog service not available. Skipping event capture.")
 
   def _calculate_vector_scores(self, search_results):
     max_vector_score = 0
